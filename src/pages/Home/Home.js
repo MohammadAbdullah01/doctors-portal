@@ -1,6 +1,6 @@
 import React from 'react';
+import Footer from '../Shared/Footer/Footer';
 import Banner from './Banner/Banner';
-import Footer from './Footer/Footer';
 import HomeContact from './HomeContact/HomeContact';
 import Info from './Info/Info';
 import MakeAppointment from './MakeAppointment/MakeAppointment';
@@ -10,7 +10,7 @@ import Treatment from './Treatment/Treatment';
 
 const Home = () => {
     return (
-        <div className='mx-12'>
+        <div >
             <Banner></Banner>
             <Info></Info>
             <Services></Services>
