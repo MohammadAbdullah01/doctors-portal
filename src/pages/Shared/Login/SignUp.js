@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import auth from '../../../firebase/firebase.init';
-import { useCreateUserWithEmailAndPassword, useSignInWithEmailAndPassword, useSignInWithGoogle } from 'react-firebase-hooks/auth';
+import { useCreateUserWithEmailAndPassword, useSendEmailVerification, useSignInWithEmailAndPassword, useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { useForm } from "react-hook-form";
 import LoadingSpinner from '../LoadingSpinner';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useUpdateProfile } from 'react-firebase-hooks/auth';
+import useToken from '../../../hooks/useToken';
+
 
 const SignUp = () => {
     const [signInWithGoogle, gUser, gLoading, gError] = useSignInWithGoogle(auth);
@@ -14,29 +16,41 @@ const SignUp = () => {
         loading,
         error,
     ] = useCreateUserWithEmailAndPassword(auth);
+    const [sendEmailVerification, sending, verificationError] = useSendEmailVerification(
+        auth
+    );
+    const [token] = useToken(user || gUser)
 
     const { register, formState: { errors }, handleSubmit } = useForm();
     const [updateProfile, updating, nameError] = useUpdateProfile(auth);
+    useEffect(() => {
+        async function run() {
+            await sendEmailVerification();
+        }
+        run()
+    }, [user])
     const onSubmit = async (data) => {
         await createUserWithEmailAndPassword(data.email, data.password)
         await updateProfile({ displayName: data.name })
     };
+
     const navigate = useNavigate()
     useEffect(() => {
-        if (user || gUser) {
+        if (token) {
             navigate('/')
         }
-    }, [user, gUser])
+    }, [token])
+
     let errorMessage = "";
     if (gError || error) {
         errorMessage = <p className='text-red-500'>{gError?.message || error?.message || nameError?.message}</p>;
     }
-    if (gLoading || loading || updating) {
+    if (gLoading || loading || updating || loading) {
         return <LoadingSpinner></LoadingSpinner>
     }
 
     return (
-        <div className='flex items-center justify-center h-screen'>
+        <div className='flex items-center justify-center min-h-screen'>
             <div className="card w-96 bg-base-100 shadow-xl ">
                 <div className="card-body">
                     <h2 className="text-center text-xl font-bold">Please Register</h2>

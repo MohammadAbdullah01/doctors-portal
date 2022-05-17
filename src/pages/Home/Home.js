@@ -14,7 +14,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 const Home = () => {
     const [user, loading, error] = useAuthState(auth);
     return (
-        <div >
+        <div>
             <Banner></Banner>
             <Info></Info>
             <Services></Services>

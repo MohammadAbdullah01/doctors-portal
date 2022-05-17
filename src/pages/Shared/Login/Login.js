@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import auth from '../../../firebase/firebase.init';
-import { useSignInWithEmailAndPassword, useSignInWithGoogle } from 'react-firebase-hooks/auth';
+import { useSendEmailVerification, useSendPasswordResetEmail, useSignInWithEmailAndPassword, useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { useForm } from "react-hook-form";
 import LoadingSpinner from '../LoadingSpinner';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useNavigation } from 'react-day-picker';
+import useToken from '../../../hooks/useToken';
 
 
 const Login = () => {
@@ -19,39 +20,47 @@ const Login = () => {
         loading,
         error,
     ] = useSignInWithEmailAndPassword(auth);
+    const [token] = useToken(user || gUser)
+    const [sendEmailVerification, sending, verificationError] = useSendEmailVerification(
+        auth
+    );
+    const [sendPasswordResetEmail, resetSending, restError] = useSendPasswordResetEmail(
+        auth
+    );
+    const { register, formState: { errors }, handleSubmit, watch } = useForm();
+    const [myEmail, setMyEmail] = useState('sdfd')
 
-    const { register, formState: { errors }, handleSubmit } = useForm();
     const onSubmit = data => {
         signInWithEmailAndPassword(data.email, data.password)
 
     };
+
     useEffect(() => {
-        if (user || gUser) {
+        if (token) {
             navigate(from, { replace: true });
         }
-    }, [user, gUser])
+    }, [token])
+
     let errorMessage = "";
     if (gError || error) {
         errorMessage = <p className='text-red-500'>{gError?.message || error?.message}</p>;
     }
-    if (gLoading || loading) {
+    if (gLoading || loading || resetSending) {
         return <LoadingSpinner></LoadingSpinner>
     }
-
+    const controlInput = watch()
     return (
-        <div className='flex items-center justify-center h-screen'>
+        <div className='flex items-center justify-center min-h-screen'>
             <div className="card w-96 bg-base-100 shadow-xl ">
                 <div className="card-body">
                     <h2 className="text-center text-xl font-bold">Please Login</h2>
                     <form onSubmit={handleSubmit(onSubmit)}>
-
-
-
                         <div className="form-control w-full max-w-xs">
                             <label className="label">
                                 <span className="label-text">Email</span>
                             </label>
                             <input
+                                onChange={(e) => setMyEmail(e.target.value)}
                                 type="email"
                                 placeholder="Your Email"
                                 className="input input-bordered w-full max-w-xs" {...register("email", {
@@ -64,7 +73,6 @@ const Login = () => {
                                         message: 'provide a valid email'
                                     }
                                 })} />
-
 
                             <label className="label">
                                 {errors.email?.type === 'required' && <span className="label-text-alt text-red-500">{errors?.email?.message}</span>}
@@ -102,6 +110,12 @@ const Login = () => {
                         {errorMessage}
                         <input className='btn w-full' type="submit" value='Login' />
                         <p>New at Doctors Portal? <Link className='text-secondary' to='/register'>Please Signup</Link></p>
+                        <p>Forgot Password? <span className='text-secondary cursor-pointer'
+                            onClick={async () => {
+                                await sendPasswordResetEmail(controlInput?.email);
+                                alert('Sent email');
+                            }}
+                        >Reset</span></p>
                     </form>
                     <div className="divider">OR</div>
                     <button className="btn btn-outline"
